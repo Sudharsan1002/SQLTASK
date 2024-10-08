@@ -1,0 +1,177 @@
+-- CREATING DATABASE
+
+CREATE DATABASE sqltask;
+USE sqltask;
+
+-- CREATING CUSTOMER TABLE
+
+CREATE TABLE customers
+(
+customer_id INT PRIMARY KEY AUTO_INCREMENT,
+customer_name VARCHAR(25) NOT NULL,
+email VARCHAR(50) UNIQUE NOT NULL,
+address TEXT
+
+);
+
+-- ADDING  VALUES IN TO table
+
+INSERT INTO customers
+(customer_id,customer_name,email,address)
+VALUES
+(NULL,"JONSNOW","jonsnow@gmail.com","NO.1,Winterfell" ),
+(NULL,"TYRION","tyrion@gmail.com","NO.2,CasterlyRock" ),
+(NULL,"THEON","theon@gmail.com","NO.3,IronIslands" ),
+(NULL,"ARYA","arya@gmail.com","NO.2,Winterfell" ),
+(NULL,"DANY","dany@gmail.com","NO.4,DragonStone" ),
+(NULL,"SAM","sam@gmail.com","NO.5,HornHill" );
+
+
+-- CREATING TABLE orders
+
+CREATE TABLE orders (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT,
+    order_date DATE NOT NULL,
+    total_amount DECIMAL(10, 2),
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+);
+
+INSERT INTO orders
+(id,customer_id,order_date,total_amount)
+VALUES
+(NULL,3,"2024-06-09",100.00),
+(NULL,6,"2024-09-26",150.00),
+(NULL,1,"2024-07-19",120.00),
+(NULL,5,"2024-10-01",140.00),
+(NULL,2,"2024-06-29",180.00),
+(NULL,4,"2024-09-30",200.00);
+
+INSERT INTO orders
+(id,customer_id,order_date,total_amount)
+VALUES
+(NULL,1,"2024-06-09",210.00),
+(NULL,2,"2024-06-28",240.00),
+(NULL,3,"2024-06-16",50.00);
+
+
+-- CREATING TABLE products
+
+CREATE TABLE products (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    prod_name VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2),
+    prod_description TEXT
+);
+
+INSERT INTO products
+(id,prod_name,price,prod_description)
+VALUES
+(NULL,"shoe","70","These shoes hug your feet with soft leather and cushiony insoles"),
+(NULL,"bracelet","60","Adorn Your Wrist, Unleash Your Spirit"),
+(NULL,"sunglass","50","Looking good while getting protected");
+SELECT * FROM  products;
+UPDATE  products
+SET prod_name="PRODUCT A"
+WHERE id=1;
+
+UPDATE  products
+SET prod_name="PRODUCT B"
+WHERE id=2;
+
+UPDATE  products
+SET prod_name="PRODUCT C"
+WHERE id=3;
+
+-- NORMALIZATION BY CREATING order_product TABLE
+
+
+CREATE TABLE order_products (
+    order_id INT,
+    product_id INT,
+    quantity INT NOT NULL,
+    PRIMARY KEY (order_id, product_id),
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+INSERT INTO order_products
+(order_id,product_id,quantity)
+VALUES
+(1,3,2),
+(2,3,3),
+(3,2,2),
+(4,1,2),
+(5,2,3),
+(6,3,4);
+
+INSERT INTO order_products
+(order_id,product_id,quantity)
+VALUES
+(7,1,3),
+(8,2,4),
+(9,3,1);
+
+-- Retrieve all customers who have placed an order in the last 30 days.
+
+SELECT c.customer_name,c.email,c.address FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+	WHERE o.order_date >= CURDATE() - INTERVAL 30 DAY ;
+    
+
+-- Get the total amount of all orders placed by each customer.
+
+SELECT c.customer_name,SUM(o.total_amount) AS total_spent
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_name 
+ORDER BY total_spent DESC;
+
+-- Update the price of Product C to 45.00.
+
+UPDATE products
+SET price = 45.00
+WHERE prod_name="PRODUCT C";
+
+
+-- Add a new column discount to the products table.
+
+ALTER TABLE products
+ADD COLUMN discount DECIMAL(5, 2) DEFAULT 0.00;
+
+SELECT * FROM products;
+
+-- Retrieve the top 3 products with the highest price.
+
+SELECT prod_name, price
+FROM products
+ORDER BY price DESC
+LIMIT 3;
+
+
+-- Get the names of customers who have ordered Product A.
+
+SELECT c.customer_name
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_products op ON o.id = op.order_id
+JOIN products p ON op.product_id = p.id
+WHERE p.prod_name="PRODUCT A";
+
+
+-- Join the orders and customers tables to retrieve the customer's name and order date for each order. 
+
+SELECT c.customer_name,o.order_date
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id;
+
+
+-- Retrieve the orders with a total amount greater than 150.00.
+
+SELECT * FROM orders WHERE total_amount > 150;
+
+
+-- Retrieve the average total of all orders.
+
+SELECT AVG(total_amount) AS average_order_total
+FROM orders;
